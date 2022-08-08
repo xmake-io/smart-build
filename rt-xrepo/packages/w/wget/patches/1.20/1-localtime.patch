@@ -1,0 +1,12 @@
+--- wget-1.20/lib/localtime-buffer.c.orig	2020-12-23 11:15:00.771466691 +0800
++++ wget-1.20/lib/localtime-buffer.c	2020-12-23 11:15:53.161015772 +0800
+@@ -32,6 +32,9 @@
+    On the first call, record the address of the static buffer that
+    localtime uses for its result.  */
+ 
++#ifdef localtime
++#undef localtime
++#endif
+ struct tm *
+ rpl_localtime (time_t const *timep)
+ {

@@ -1,0 +1,16 @@
+--- uhttpd-2021/uhttpd.c.orig	2020-12-30 10:29:04.217619007 +0800
++++ uhttpd-2021/uhttpd.c	2020-12-30 10:30:00.262556034 +0800
+@@ -808,12 +808,7 @@
+ 
+ 			/* docroot */
+ 			case 'h':
+-				if( ! realpath(optarg, conf.docroot) )
+-				{
+-					fprintf(stderr, "Error: Invalid directory %s: %s\n",
+-						optarg, strerror(errno));
+-					exit(1);
+-				}
++				strcpy(conf.docroot, optarg);
+ 				break;
+ 
+ 			/* error handler */
