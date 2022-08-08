@@ -31,23 +31,23 @@
 
 1. smart-build 存放位置
 
-   ![image-20220803155859823](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220803155859823.png)
+   ![image-20220803155859823](figures/image-20220803155859823.png)
 
 2. menuconfig 主界面展示
 
-   ![image-20220803162731196](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220803162731196.png)
+   ![image-20220803162731196](figures/image-20220803162731196.png)
 
 3. gnu_app 界面展示，支持多版本的选择：
 	
-   ![image-20220803162752524](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220803162752524.png)
+   ![image-20220803162752524](figures/image-20220803162752524.png)
 
 4. 工具链以及芯片架构选择界面，目前可选择 arm 或者 aarch64 架构：
    
-   ![image-20220803163102256](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220803163102256.png)
+   ![image-20220803163102256](figures/image-20220803163102256.png)
    
 5. 编译选项配置界面：
 
-   ![image-20220803163201611](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220803163201611.png)
+   ![image-20220803163201611](figures/image-20220803163201611.png)
 
 6. 配置保存，当选项配置完成后，选择 Save 保存当前配置。smart-build 会保存当前配置到 .config 文件中。
 
