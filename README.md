@@ -51,6 +51,27 @@
 
 6. 配置保存，当选项配置完成后，选择 Save 保存当前配置。smart-build 会保存当前配置到 .config 文件中。
 
+## 命令行
+
+```shell
+Command options (buildroot):
+        --menuconfig                 config and build gnu_app.
+        --clean                      clean build dir.
+        --distclean                  clean build and all installed pkg.
+```
+
+### menuconfig
+
+打开 menuconfig 界面，配置完成后，自动编译
+
+### clean
+
+清理编译目录
+
+### distclean
+
+清理编译目录和所有已经安装的包
+
 ## 编译流程
 
 1. 用户选择要编译的 gnu-app
@@ -61,5 +82,41 @@
 6. 构建 APP 并将生成物存放在 rt-smart/userapps/root 或者 
 7. 根据现有脚本制作 rootfs 镜像文件
 
+### 生成可执行文件
 
+smart-build 工具支持生成可执行文件。以 lua app 为例，演示配置流程：
+
+1. 选择 lua 软件包：
+
+   ![image-20220809162916935](figures/image-20220809162916935.png)
+
+2. 选择工具链和目标平台：
+
+   ![image-20220809162954794](figures/image-20220809162954794.png)
+
+3. 保存，退出，smart-build 工具会自动拉取软件包并进行编译：
+
+   ![image-20220809163042480](figures/image-20220809163042480.png)
+
+4. 可执行文件路径。（后续会修改该路径到 rtt-smart/userapps/root/bin）：
+
+   ![image-20220809163135599](figures/image-20220809163135599.png)
+
+### 生成静态库文件
+
+smart-build 工具支持生成静态库文件。以 zlib app 为例，演示配置流程：
+
+1. 选择 zlib app:
+
+   ![image-20220809163342928](figures/image-20220809163342928.png)
+
+2. 参考生成可执行文件流程，配置工具链和目标平台。
+
+3. 保存，退出，smart-build 工具会自动拉取软件包并进行编译：
+
+   ![image-20220809163443832](figures/image-20220809163443832.png)
+
+4. 静态库文件路径。（后续会修改该路径到 rtt-smart/userapps/root/lib)：
+
+   ![image-20220809163545912](figures/image-20220809163545912.png)
 
