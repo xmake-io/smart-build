@@ -3,27 +3,11 @@
 ## 基本功能
 
 - 针对系列的软件包，构建类似 buildroot 的 menuconfig 选择软件包及配置；
-
 - 支持两种以上架构的编译工具链，如arm、aarch64、risc-v 等中的两种，并可选择；
-
 - 支持软件包的不同版本，并处理好依赖关系，并从网络上下载下来到本地；
-
 - 支持 release 模式编译，支持 debug 模式编译；
-
 - 支持按静态库模式编译，支持按动态库模式编译；
-
 - 支持在最终输出到根文件系统时 strip 掉多余的符号信息；
-
-## 输出内容
-
-- [x] 能够基于RT-Thread Smart 应用程序构建的方式，构建一个个的程序，并输出到 rt-smart/userapps/root 目录下，
-- [ ] 可以使用已有脚本转成 rootfs 的映像文件
-- [x] 可通过 menuconfig 可视化配置工具链和编译选项
-- [x] 支持两种以上架构的编译工具链，如 arm、aarch64、risc-v 等中的两种
-- [ ] 支持软件包的不同版本，并处理好依赖关系，并从网络上下载下来到本地
-- [ ] 支持 Debug/Release 编译模式切换
-- [ ] 支持静态库和动态库切换
-- [ ] 支持在最终输出到根文件系统时strip掉多余的符号信息
 
 ## 整体设计
 
@@ -50,6 +34,31 @@
    ![image-20220803163201611](figures/image-20220803163201611.png)
 
 6. 配置保存，当选项配置完成后，选择 Save 保存当前配置。smart-build 会保存当前配置到 .config 文件中。
+
+## 目录结构
+
+```
+smart-build
+├───figures                     	// 文档使用图片
+├───rt-xrpo							// 包索引
+|	|───packages
+|   |	|───c
+|	|	|	|───cul
+|	|	|	| 	|───patches         // 补丁文件
+|	|	|	|	|───xmake.lua       // 编译配置
+|   |   |───d
+|───scripts                         // 配置文件，包括界面配置
+|	|───buildroot.lua	
+|	|───menuconfig.lua	
+|	|───packages.lua	
+|	|───platform.lua	
+|───toolchains						// 工具链
+|	|───aarch64.lua					
+|	|───arm.lua
+|───xmake.lua
+│   README.md                       // 工具使用说明
+
+```
 
 ## 命令行
 

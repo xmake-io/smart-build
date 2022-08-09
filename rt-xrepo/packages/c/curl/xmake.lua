@@ -13,10 +13,10 @@ package("curl")
 
     on_install("cross", function (package)
 	local CROSS_COMPILE="arm-linux-musleabi"
-        local configs = {"--prefix=" .. package:installdir(), "--target=" .. CROSS_COMPILE, "--host=" .. CROSS_COMPILE, "--build=i686-pc-linux-gnu", "--with-ssl", "--with-zlib"}
+    local configs = {"--prefix=" .. package:installdir(), "--target=" .. CROSS_COMPILE, "--host=" .. CROSS_COMPILE, "--build=i686-pc-linux-gnu", "--with-ssl", "--with-zlib"}
 	local buildenvs = import("package.tools.autoconf").buildenvs(package)
-        buildenvs.CFLAGS = path.join(buildenvs.CFLAGS, " -I", package:dep("zlib"):installdir("include"), " -I", package:dep("openssl"):installdir("include"))
-        buildenvs.LIBS = path.join(buildenvs.LDFLAGS, " -static -Wl,--start-group -lc -lgcc -lrtthread -Wl,--end-group")
+    buildenvs.CFLAGS = path.join(buildenvs.CFLAGS, " -I", package:dep("zlib"):installdir("include"), " -I", package:dep("openssl"):installdir("include"))
+    buildenvs.LIBS = path.join(buildenvs.LDFLAGS, " -static -Wl,--start-group -lc -lgcc -lrtthread -Wl,--end-group")
 	buildenvs.LDFLAGS = path.join("-L", package:dep("zlib"):installdir("lib"), " -L", package:dep("openssl"):installdir("lib"))
 	os.vrunv("./configure", configs, {envs = buildenvs})
 	local makeconfigs = {V=1, CFLAGS = buildenvs.CFLAGS, LDFLAGS = buildenvs.LDFLAGS, LIBS = buildenvs.LIBS}

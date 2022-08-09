@@ -9,12 +9,7 @@ package("openssl")
 
     add_links("ssl", "crypto")
 
-    on_install("linux", "macosx", function (package)
-        os.vrun("./config %s --prefix=\"%s\"", package:debug() and "--debug" or "", package:installdir())
-        import("package.tools.make").install(package)
-    end)
-
-    on_install("cross", function (package)
+    on_install("cross", "linux", function (package)
         local target = "linux-generic32"
         if package:is_targetos("linux") then
             if package:is_arch("arm64") then
@@ -25,10 +20,8 @@ package("openssl")
         end
         local configs = {target, "-DOPENSSL_NO_HEARTBEATS", "no-shared", "no-threads", "--prefix=" .. package:installdir()}
         local buildenvs = import("package.tools.autoconf").buildenvs(package)
-	buildenvs.CFLAGS = (buildenvs.CFLAGS .. " -I" .. os.scriptdir("") .. "/include")
-        os.vrunv("./Configure", configs, {envs = buildenvs})
-        local makeconfigs = {CFLAGS = buildenvs.CFLAGS, ASFLAGS = buildenvs.ASFLAGS}
-        import("package.tools.make").install(package, makeconfigs)
+        os.vrun("./config %s --prefix=\"%s\"", package:debug() and "--debug" or "", package:installdir())
+        import("package.tools.make").install(package, buildenvs)
 	os.cp(os.scriptdir("") .. "/include/*", package:installdir("include"))
     end)
 

@@ -23,32 +23,9 @@ package("lua")
         io.writefile("xmake.lua", format([[
             local sourcedir = "%s"
             local pd = os.getenv("PROJ_DIR")
-
-            toolchain("rt_toolchain")
-                set_kind("standalone")
-                set_sdkdir(pd .. "/../../tools/gnu_gcc/install_arm-linux-musleabi_for_x86_64-pc-linux-gnu")
-                on_load(function(toolchain)
-                    toolchain:load_cross_toolchain()
-                    toolchain:set("toolset", "cxx", "arm-linux-musleabi-g++")
-                    -- add flags for arch
-                    toolchain:add("cxflags", "-march=armv7-a -marm -msoft-float -O0 -g -gdwarf-2  -Wall -n --static", {force = true}) 
-                    toolchain:add("ldflags", "-march=armv7-a -marm -msoft-float -O0 -g -gdwarf-2  -Wall -n --static", {force = true})
-                    toolchain:add("ldflags", "-T " .. pd  .. "/../linker_scripts/arm/cortex-a/link.lds", {force = true})
-                    toolchain:add("ldflags", "-Wl,--whole-archive -lrtthread -Wl,--no-whole-archive", {force = true})
-                    toolchain:add("ldflags", "-Wl,--start-group -lrtthread -Wl,--end-group", {force = true})
-                    toolchain:add("includedirs", pd .. "/../sdk/rt-thread/include")
-                    toolchain:add("includedirs", pd .. "/../sdk/rt-thread/components/dfs")
-                    toolchain:add("includedirs", pd .. "/../sdk/rt-thread/components/drivers")
-                    toolchain:add("includedirs", pd .. "/../sdk/rt-thread/components/finsh")
-                    toolchain:add("includedirs", pd .. "/../sdk/rt-thread/components/net")
-                    toolchain:add("linkdirs", pd .. "/../sdk/rt-thread/lib")
-                end)
-            toolchain_end()
-
             target("lualib")
                 set_kind("static")
                 set_basename("lua")
-		set_toolchains("rt_toolchain")
                 add_headerfiles(sourcedir .. "*.h", {prefixdir = "lua"})
                 add_files(sourcedir .. "*.c|lua.c|luac.c|onelua.c")
                 add_defines("LUA_COMPAT_5_2", "LUA_COMPAT_5_1")
@@ -87,7 +64,8 @@ package("lua")
         if package:config("shared") then
             configs.kind = "shared"
         end
-
+        package:config_set("pic", false)   
+        import("package.tools.autoconf").buildenvs(package)
         import("package.tools.xmake").install(package, configs)
     end)
 
