@@ -276,6 +276,5 @@ function main(...)
         end
     end
     app:run(...)
-    -- app:save()
     return results;
 end

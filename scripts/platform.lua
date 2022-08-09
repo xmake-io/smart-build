@@ -22,7 +22,7 @@ option("mode")
     set_values("debug", "release")
 option_end()
 
-option("type")
+option("kind")
     set_default("static")
     set_showmenu(true)
     set_category("Target options")

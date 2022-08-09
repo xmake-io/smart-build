@@ -1,3 +1,4 @@
+
 -- imports
 import("menuconf", {
     alias = "load_menuconf"
@@ -29,10 +30,10 @@ function main()
     -- menuconfig
     if option.get("menuconfig") then
         -- load configuration from menu
-        local configs = load_menuconf()
-        for name, value in pairs(configs) do
-            config.set(name, value, {readonly = true})
-        end
+        load_menuconf()
+        -- for name, value in pairs(configs) do
+        --     config.set(name, value, {readonly = true})
+        -- end
         -- load platform instance
         local platform_inst = platform.load()
 
@@ -42,22 +43,13 @@ function main()
         -- check platform and toolchains
         platform_inst:check()
 
-        -- export toolchain scripts for installing packages with xmake.lua
-        for _, rcfile in ipairs(os.files(path.join(os.scriptdir(), "toolchains", "arm.lua"))) do
-            os.addenv("XMAKE_RCFILES", rcfile)
-        end
-
         -- install packages
         install_packages()
 
         -- export packages to build directory
         local buildir = config.buildir()
         local requires, requires_extra = project.requires_str()
-        for _, package_inst in ipairs(package.load_packages(requires, {
-            requires_extra = requires_extra,
-            nodeps = nodeps
-        })) do
-
+        for _, package_inst in ipairs(package.load_packages(requires, {requires_extra = requires_extra, nodeps = nodeps})) do
             if not os.exists(buildir) then
                 os.mkdir(buildir .. "/bin")
                 os.mkdir(buildir .. "/lib")

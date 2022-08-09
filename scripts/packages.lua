@@ -65,6 +65,7 @@ option("quickjs")
     set_showmenu(true)
     set_description("quickjs")
     set_category("Target packages/Interpreter languages and scripting")
+    -- option_end()
 option_end()
 
 option("lua")
@@ -77,10 +78,9 @@ option_end()
 
 -- Compressors and decompressors
 option("zlib")
-    set_default("1.0")
+    set_default(false)
     set_showmenu(true)
     set_description("zlib")
-    set_values("1.0", "2.0")
     set_category("Target packages/Compressors and decompressors")
 option_end()
 
@@ -95,6 +95,13 @@ option_end()
 
 
 -- Level 3 menu: select package version
+-- option("version")
+--     set_default("1.0")
+--     set_showmenu(true)
+--     set_description("version")
+--     set_values("1.0", "2.0")
+--     set_category("Target packages/Compressors and decompressors/zlib")
+-- option_end()
 
 local apps = {"lua", "pcre", "zlib", "openssl", "quickjs", "wget", "curl", "uhttpd"} --libs ahead
 
