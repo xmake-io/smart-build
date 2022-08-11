@@ -42,11 +42,11 @@ smart-build
 smart-build
 ├───figures                     				// 文档使用图片
 ├───rt-xrpo							// 包索引
-|   |	|───packages
+|   |───packages
 |   |	|───c
-|   |	|	|    |───cul
-|   |	|	|    | 	|───patches         			// 补丁文件
-|   |	|	|    |	|───xmake.lua       			// 编译配置
+|   |	|   |───cul
+|   |	|   |   |───patches         				// 补丁文件
+|   |	|   |   |	|───xmake.lua       			// 编译配置
 |   |   |───d
 |───scripts                         				// 配置文件，包括界面配置
 |	|───buildroot.lua	
