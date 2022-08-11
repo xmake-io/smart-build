@@ -31,9 +31,7 @@ function main()
     if option.get("menuconfig") then
         -- load configuration from menu
         load_menuconf()
-        -- for name, value in pairs(configs) do
-        --     config.set(name, value, {readonly = true})
-        -- end
+
         -- load platform instance
         local platform_inst = platform.load()
 
@@ -58,7 +56,7 @@ function main()
             end
 
             if os.exists(package_inst:installdir("bin")) then
-                os.cp(package_inst:installdir("bin") .. "/*", buildir .. "/bin")
+                os.cp(package_inst:installdir("bin") .. "/*",  "$(projectdir)/../root/bin/")
             end
 
             if os.exists(package_inst:installdir("lib")) then
@@ -67,13 +65,6 @@ function main()
 
             if os.exists(package_inst:installdir("include")) then
                 os.cp(package_inst:installdir("include") .. "/*", buildir .. "/include")
-            end
-
-            if (package_inst:name() == "wget") then
-                if not os.exists(buildir .. "/config/wget") then
-                    os.mkdir(buildir .. "/config/wget")
-                end
-                os.cp(package_inst:installdir("etc"), buildir .. "/config/wget")
             end
         end
     end

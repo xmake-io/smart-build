@@ -17,10 +17,11 @@ package("lua")
     end)
 
     on_install("cross", "linux", "macosx", "windows", "android", "bsd", function (package)
-	--import("core.base.option")
-	--print(option.get("includes"))
         local sourcedir = os.isdir("src") and "src/" or "" -- for tar.gz or git source
         io.writefile("xmake.lua", format([[
+            if is_mode("release") then
+                add_rules("mode.release")
+            end
             local sourcedir = "%s"
             local pd = os.getenv("PROJ_DIR")
             target("lualib")
@@ -50,14 +51,14 @@ package("lua")
                     add_syslinks("dl")
                 end
 
-            --##can not exec success
-            --target("luac")
-            --    set_kind("binary")
-            --    add_files(sourcedir .. "luac.c")
-            --    add_deps("lualib")
-            --    if not is_plat("windows") then
-            --        add_syslinks("dl")
-            --    end
+            -- ##can not exec success
+            target("luac")
+               set_kind("binary")
+               add_files(sourcedir .. "luac.c")
+               add_deps("lualib")
+               if not is_plat("windows") then
+                   add_syslinks("dl")
+               end
         ]], sourcedir))
 
         local configs = {}
