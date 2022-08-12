@@ -86,11 +86,10 @@ Command options (buildroot):
 
 1. 用户选择要编译的 gnu-app
 2. 配置工具链和平台架构 （arm、aarch64）
-3. 配置编译选项 （-o0/1/2/3/4/s、debug/release）
-4. 保存并且退出
-5. 自动从仓库拉取对应版本的 gnu-app
-6. 构建 APP 并将生成物存放在 rt-smart/userapps/root 或者 
-7. 根据现有脚本制作 rootfs 镜像文件
+3. 保存并且退出
+4. 自动从仓库拉取对应版本的 gnu-app
+5. 构建 APP 并将生成物存放在 rt-smart/userapps/root/bin
+6. 根据现有脚本制作 rootfs 镜像文件
 
 ### 生成可执行文件
 
