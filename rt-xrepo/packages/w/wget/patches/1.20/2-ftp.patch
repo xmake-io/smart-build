@@ -1,0 +1,18 @@
+--- wget-1.20/src/connect.c.orig	2020-12-15 18:43:41.854391418 +0800
++++ wget-1.20/src/connect.c	2020-12-15 18:46:48.978176843 +0800
+@@ -564,6 +564,7 @@
+     return false;
+ 
+   memset(ip, 0, sizeof(ip_address));
++  sockaddr->sa_family=AF_INET;
+   ip->family = sockaddr->sa_family;
+   switch (sockaddr->sa_family)
+     {
+@@ -618,6 +619,7 @@
+   if (ret < 0)
+     return -1;
+ 
++  sockaddr->sa_family=AF_INET;
+   return sockaddr->sa_family;
+ }
+ 

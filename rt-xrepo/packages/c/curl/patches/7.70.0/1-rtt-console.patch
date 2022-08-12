@@ -1,0 +1,22 @@
+--- curl-7.70.0/src/tool_main.c.orig	2021-01-04 15:51:29.165794893 +0800
++++ curl-7.70.0/src/tool_main.c	2021-01-04 15:51:37.689402898 +0800
+@@ -22,6 +22,7 @@
+ #include "tool_setup.h"
+ 
+ #include <sys/stat.h>
++#include <fcntl.h>
+ 
+ #ifdef HAVE_SIGNAL_H
+ #include <signal.h>
+@@ -268,6 +269,11 @@
+    * when Curl started */
+   SetConsoleMode(TerminalSettings.hStdOut, TerminalSettings.dwOutputMode);
+ #endif
++//#ifdef RT_USING_CONSOLE
++  int flags;
++  flags = sfcntl(STDIN_FILENO, F_GETFL, 0);
++  sfcntl(STDIN_FILENO, F_SETFL, flags & (~O_NONBLOCK));
++//#endif
+ }
+ 
+ /*
