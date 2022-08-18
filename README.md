@@ -19,7 +19,7 @@
 
 2. menuconfig 主界面展示
 
-   ![image-20220812172426535](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220812172426535.png)
+   ![image-20220812172426535](figures/image-20220812172426535.png)
 
 3. gnu_app 界面展示，支持多版本的选择：
 	
