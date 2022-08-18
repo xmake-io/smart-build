@@ -105,7 +105,7 @@ smart-build 工具支持生成可执行文件。以 lua app 为例，演示配�
 
 4. 可执行文件路径。：
 
-   ![image-20220812172550447](figures\image-20220812172550447.png)
+   ![image-20220812172550447](figures/image-20220812172550447.png)
 
 ### 生成静态库文件
 
@@ -124,35 +124,3 @@ smart-build 工具支持生成静态库文件。以 zlib app 为例，演示配�
 4. 静态库文件：
 
    ![image-20220809163545912](figures/image-20220809163545912.png)
-
-## 软件包列表
-
-- [ ] art-pi-demo-web
-- [ ] busybox
-- [ ] c-ares
-- [ ] curl
-- [ ] dropbear
-- [ ] dungeonrush
-- [ ] examples
-- [ ] freetype
-- [ ] iperf3
-- [ ] libmodbus
-- [ ] libpng
-- [ ] librws
-- [ ] lighttpd
-- [x] lua
-- [ ] lz4
-- [ ] minishell
-- [ ] mqttc
-- [ ] ncurses
-- [ ] openssl-1.1.1i
-- [ ] pcre
-- [ ] posixtestsuite
-- [ ] quickjs
-- [ ] sdl
-- [ ] sqlite
-- [ ] stupid-ftpd
-- [ ] uhttpd-cgi-test
-- [ ] uhttpd
-- [ ] wget
-- [x] zlib
