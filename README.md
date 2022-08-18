@@ -19,7 +19,7 @@
 
 2. menuconfig 主界面展示
 
-   ![image-20220803162731196](figures/image-20220803162731196.png)
+   ![image-20220812172426535](C:\Users\LiuKang\AppData\Roaming\Typora\typora-user-images\image-20220812172426535.png)
 
 3. gnu_app 界面展示，支持多版本的选择：
 	
@@ -29,10 +29,6 @@
    
    ![image-20220803163102256](figures/image-20220803163102256.png)
    
-5. 编译选项配置界面：
-
-   ![image-20220803163201611](figures/image-20220803163201611.png)
-
 6. 配置保存，当选项配置完成后，选择 Save 保存当前配置。smart-build 会保存当前配置到 .config 文件中。
 
 ## 目录结构
@@ -40,8 +36,8 @@
 ```
 smart-build
 smart-build
-├───figures                     				// 文档使用图片
-├───rt-xrpo							// 包索引
+├───figures                     				   // 文档使用图片
+├───rt-xrpo							               // 包索引
 |   |───packages
 |   |	|───c
 |   |	|   |───cul
@@ -53,7 +49,7 @@ smart-build
 |	|───menuconfig.lua	
 |	|───packages.lua	
 |	|───platform.lua	
-|───toolchains							// 工具链
+|───toolchains							            // 工具链
 |	|───aarch64.lua					
 |	|───arm.lua
 |───xmake.lua
@@ -72,7 +68,7 @@ Command options (buildroot):
 
 ### menuconfig
 
-打开 menuconfig 界面，配置完成后，自动编译
+打开 menuconfig 界面，配置完成后，自动拉取软件包进行编译安装。
 
 ### clean
 
@@ -107,9 +103,9 @@ smart-build 工具支持生成可执行文件。以 lua app 为例，演示配�
 
    ![image-20220809163042480](figures/image-20220809163042480.png)
 
-4. 可执行文件路径。（后续会修改该路径到 rtt-smart/userapps/root/bin）：
+4. 可执行文件路径。：
 
-   ![image-20220809163135599](figures/image-20220809163135599.png)
+   ![image-20220812172550447](figures\image-20220812172550447.png)
 
 ### 生成静态库文件
 
@@ -125,7 +121,38 @@ smart-build 工具支持生成静态库文件。以 zlib app 为例，演示配�
 
    ![image-20220809163443832](figures/image-20220809163443832.png)
 
-4. 静态库文件路径。（后续会修改该路径到 rtt-smart/userapps/root/lib)：
+4. 静态库文件：
 
    ![image-20220809163545912](figures/image-20220809163545912.png)
 
+## 软件包列表
+
+- [ ] art-pi-demo-web
+- [ ] busybox
+- [ ] c-ares
+- [ ] curl
+- [ ] dropbear
+- [ ] dungeonrush
+- [ ] examples
+- [ ] freetype
+- [ ] iperf3
+- [ ] libmodbus
+- [ ] libpng
+- [ ] librws
+- [ ] lighttpd
+- [x] lua
+- [ ] lz4
+- [ ] minishell
+- [ ] mqttc
+- [ ] ncurses
+- [ ] openssl-1.1.1i
+- [ ] pcre
+- [ ] posixtestsuite
+- [ ] quickjs
+- [ ] sdl
+- [ ] sqlite
+- [ ] stupid-ftpd
+- [ ] uhttpd-cgi-test
+- [ ] uhttpd
+- [ ] wget
+- [x] zlib
