@@ -11,7 +11,9 @@ import("core.platform.platform")
 import("private.action.require.install", {
     alias = "install_packages"
 })
+import("private.action.require.impl.utils.get_requires")
 import("private.action.require.impl.package")
+import("private.action.require.impl.environment")
 
 
 function main()
@@ -30,19 +32,22 @@ function main()
     -- menuconfig
     if option.get("menuconfig") then
         -- load configuration from menu
-        load_menuconf()
+        local configs = load_menuconf()
 
         -- load platform instance
         local platform_inst = platform.load()
-
         -- clear local cache
         localcache.clear()
 
         -- check platform and toolchains
         platform_inst:check()
+        
+        if configs["package"] == "" then
+            print("please input package name!")
+            return
+        end
 
-        -- install packages
-        install_packages()
+        install_packages(configs["package"])
 
         -- export packages to build directory
         local buildir = config.buildir()
@@ -54,21 +59,18 @@ function main()
                 os.mkdir(buildir .. "/include")
                 os.mkdir(buildir .. "/config")
             end
-
             if os.exists(package_inst:installdir("bin")) then
                 os.cp(package_inst:installdir("bin") .. "/*",  "$(projectdir)/../root/bin/")
             end
 
             if os.exists(package_inst:installdir("lib")) then
-                os.cp(package_inst:installdir("lib") .. "/*.a", buildir .. "/lib")
+                os.cp(package_inst:installdir("lib") .. "/*.a", "$(projectdir)/../sdk/lib/")
             end
 
             if os.exists(package_inst:installdir("include")) then
-                os.cp(package_inst:installdir("include") .. "/*", buildir .. "/include")
+                os.cp(package_inst:installdir("include") .. "/*", "$(projectdir)/../sdk/include/")
             end
         end
     end
-
-    -- build
 
 end

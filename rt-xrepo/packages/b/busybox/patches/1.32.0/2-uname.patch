@@ -1,0 +1,17 @@
+--- busybox-1.32.0/coreutils/uname.c.orig	2021-03-19 15:13:07.349098693 +0800
++++ busybox-1.32.0/coreutils/uname.c	2021-03-19 15:22:01.012851179 +0800
+@@ -199,12 +199,13 @@
+ 			if (toprint & 1) {
+ 				const char *p = (char *)(&uname_info) + *delta;
+ 				if (p[0]) {
+-					printf(fmt, p);
++					//printf(fmt, p);
+ 					fmt = " %s";
+ 				}
+ 			}
+ 			++delta;
+ 		} while (toprint >>= 1);
++		printf("rt-thread");
+ 		bb_putchar('\n');
+ #endif
+ 	}

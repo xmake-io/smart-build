@@ -1,0 +1,220 @@
+--- busybox-1.32.0/networking/ftpd.c	2018-12-05 22:44:34.000000000 +0800
++++ busybox-1.32.0.bak/networking/ftpd.c	2021-05-20 15:07:07.976705741 +0800
+@@ -154,6 +154,8 @@
+ 
+ #define MSG_OK "Operation successful\r\n"
+ #define MSG_ERR "Error\r\n"
++int totalnum = 0;
++char *basedir = NULL;
+ 
+ struct globals {
+ 	int pasv_listen_fd;
+@@ -342,10 +344,71 @@
+ static void
+ handle_cwd(void)
+ {
++	char buff[500];
++	char buff_path[500];
++	int len_basedir = 0;
++	int len_oldpath = 0;
++	int len_newpath = 0;
++	memset(buff,0,sizeof(buff));
++	memset(buff_path,0,sizeof(buff_path));
++
++	char *cwd_old, *response_old;
++	char *cwd_new, *response_new;
++
++        cwd_old = xrealloc_getcwd_or_warn(NULL);
++        if (cwd_old == NULL)
++                cwd_old = xstrdup("");
++
++        response_old = escape_text(" \"", cwd_old, ('"' << 8) + '"');
++	len_oldpath = strlen(response_old);
++        free(cwd_old);
++	len_basedir = strlen(basedir);
++
++	strncpy(buff,response_old+2,strlen(response_old)-3);
++	
++	free(response_old);
++	if (strcmp(G.ftp_arg,"/") == 0) {
++		if (!basedir || chdir(basedir) != 0) {
++                	WRITE_ERR(FTP_FILEFAIL);
++                	return;
++       		}	
++		WRITE_OK(FTP_CWDOK);
++		return;
++	}
++	
++	if((G.ftp_arg[0] == '/') && (strlen(G.ftp_arg) != 1)) {
++		strcpy(buff_path,basedir);
++		strcat(buff_path,G.ftp_arg);
++		if (!buff_path || chdir(buff_path) != 0) {
++                        WRITE_ERR(FTP_FILEFAIL);
++                        return;
++                }       
++		goto CHECK;
++	}
++	
+ 	if (!G.ftp_arg || chdir(G.ftp_arg) != 0) {
+ 		WRITE_ERR(FTP_FILEFAIL);
+ 		return;
+ 	}
++
++CHECK:
++        cwd_new = xrealloc_getcwd_or_warn(NULL);
++        if (cwd_new == NULL)
++                cwd_new = xstrdup("");
++
++        response_new = escape_text(" \"", cwd_new, ('"' << 8) + '"');
++        free(cwd_new);
++	len_newpath = strlen(response_new);
++	free(response_new);
++	if((len_newpath-3) < len_basedir) {
++		if (!buff || chdir(buff) != 0) {
++                        WRITE_ERR(FTP_FILEFAIL);
++                        return;
++                }
++		WRITE_ERR(FTP_FILEFAIL);
++		return;
++	}
++
+ 	WRITE_OK(FTP_CWDOK);
+ }
+ 
+@@ -754,14 +817,22 @@
+ 	FILE *ls_fp;
+ 	char *line;
+ 	int ls_fd;
++	int number=0;
+ 
+ 	if (!(opts & USE_CTRL_CONN) && !port_or_pasv_was_seen())
+ 		return; /* port_or_pasv_was_seen emitted error response */
+ 
+ 	ls_fd = popen_ls((opts & LONG_LISTING) ? "-lA" : "-1A");
++	if(ls_fd<0)
++	{
++		WRITE_OK(FTP_TRANSFEROK);
++		return;
++		
++	}
+ 	ls_fp = xfdopen_for_read(ls_fd);
+ /* FIXME: filenames with embedded newlines are mishandled */
+ 
++
+ 	if (opts & USE_CTRL_CONN) {
+ 		/* STAT <filename> */
+ 		cmdio_write_raw(STR(FTP_STATFILE_OK)"-File status:\r\n");
+@@ -782,7 +853,10 @@
+ 		if (remote_fd >= 0) {
+ 			while (1) {
+ 				unsigned len;
+-
++				
++				if(number>=totalnum)
++					break;
++				number++;
+ 				line = xmalloc_fgets(ls_fp);
+ 				if (!line)
+ 					break;
+@@ -1169,6 +1243,55 @@
+ 	OPT_w = (1 << (BIT_A + 3)) * ENABLE_FEATURE_FTPD_WRITE,
+ };
+ 
++
++void GetTheNumberOfCurrentPath()
++{
++	
++	struct stat s_buf;
++	DIR *dire;
++        struct dirent *ptr;
++        char *ret;
++        int len=0;
++        char currentpath[500];
++        totalnum = 0;
++	int stat_value = 0;
++        memset(currentpath,0,sizeof(currentpath));
++        unsigned path_max_temporary;
++        path_max_temporary = 500;
++        ret = getcwd(currentpath,path_max_temporary);
++        if (ret == NULL) {
++        	perror("failed to obtain currentpath");
++                exit(-1);
++        }
++	
++        len = strlen(currentpath);
++        if (G.ftp_arg != NULL) {
++		stat_value = stat(G.ftp_arg,&s_buf);
++		if (stat_value == 0){
++			if (S_ISDIR(s_buf.st_mode)) {
++        			currentpath[len] = '/';
++                		currentpath[len+1] = '\0';
++                		strcat(currentpath,G.ftp_arg);
++			}
++			else if (S_ISREG(s_buf.st_mode)) {
++				totalnum = 1;
++				return;
++			}
++		}
++		else {
++			totalnum = 0;
++			return;
++		}
++        }
++        dire = opendir(currentpath);
++        if(dire == NULL)
++                return 0;
++        while((ptr=readdir(dire)) != NULL)
++        	totalnum++;
++        closedir(dire);
++        return 0;
++}
++
+ int ftpd_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
+ int ftpd_main(int argc UNUSED_PARAM, char **argv)
+ {
+@@ -1180,6 +1303,7 @@
+ 	unsigned verbose_S;
+ 	smallint opts;
+ 
++	int value = 0;
+ 	INIT_G();
+ 
+ 	abs_timeout = 1 * 60 * 60;
+@@ -1296,13 +1420,14 @@
+ #endif
+ 	argv += optind;
+ 	if (argv[0]) {
+-		const char *basedir = argv[0];
++		//const char *basedir = argv[0];
++		basedir = argv[0];
+ #if !BB_MMU
+ 		G.root_fd = xopen("/", O_RDONLY | O_DIRECTORY);
+ 		close_on_exec_on(G.root_fd);
+ #endif
+ 		if (chroot(basedir) == 0)
+-			basedir = "/";
++			//basedir = "/";
+ #if !BB_MMU
+ 		else {
+ 			close(G.root_fd);
+@@ -1364,7 +1489,6 @@
+ 
+ 	while (1) {
+ 		uint32_t cmdval = cmdio_get_cmd_and_arg();
+-
+ 		if (cmdval == const_QUIT) {
+ 			WRITE_OK(FTP_GOODBYE);
+ 			return 0;
+@@ -1403,8 +1527,10 @@
+ 					? STRNUM32(FTP_HELP)
+ 					: STRNUM32(FTP_STATOK)
+ 			);
+-		else if (cmdval == const_LIST) /* ls -l */
+-			handle_list();
++		else if (cmdval == const_LIST) {/* ls -l */
++			GetTheNumberOfCurrentPath();
++                        handle_list();
++		}
+ 		else if (cmdval == const_NLST) /* "name list", bare ls */
+ 			handle_nlst();
+ 		/* SIZE is crucial for wget's download indicator etc */

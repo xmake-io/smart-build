@@ -1,0 +1,92 @@
+--- busybox-1.32.0/networking/ftpd.c	2021-09-27 15:31:01.816447759 +0800
++++ busybox-1.32.0-bak/networking/ftpd.c	2021-09-27 15:32:33.432372455 +0800
+@@ -131,6 +131,7 @@
+ #define STR1(s) #s
+ #define STR(s) STR1(s)
+ 
++char list_buff[100] = {'0'};
+ /* Convert a constant to 3-digit string, packed into uint32_t */
+ enum {
+ 	/* Shift for Nth decimal digit */
+@@ -367,8 +368,11 @@
+ 	int len_basedir = 0;
+ 	int len_oldpath = 0;
+ 	int len_newpath = 0;
++	int buff_len = 0;
+ 	memset(buff,0,sizeof(buff));
+ 	memset(buff_path,0,sizeof(buff_path));
++	memset(list_buff,0,sizeof(list_buff));
++	memcpy(list_buff,basedir,strlen(basedir));
+ 
+ 	char *cwd_old, *response_old;
+ 	char *cwd_new, *response_new;
+@@ -387,9 +391,13 @@
+ 	free(response_old);
+ 	if (strcmp(G.ftp_arg,"/") == 0) {
+ 		if (!basedir || chdir(basedir) != 0) {
++                        memset(list_buff,0,sizeof(list_buff));
++                        memcpy(list_buff,buff,strlen(buff));
+                 	WRITE_ERR(FTP_FILEFAIL);
+                 	return;
+        		}	
++		memset(list_buff,0,sizeof(list_buff));
++		memcpy(list_buff,basedir,strlen(basedir));
+ 		WRITE_OK(FTP_CWDOK);
+ 		return;
+ 	}
+@@ -398,20 +406,33 @@
+ 		strcpy(buff_path,basedir);
+ 		strcat(buff_path,G.ftp_arg);
+ 		if (!buff_path || chdir(buff_path) != 0) {
++                        memset(list_buff,0,sizeof(list_buff));
++                        memcpy(list_buff,buff,strlen(buff));
+                         WRITE_ERR(FTP_FILEFAIL);
+                         return;
+                 }       
++		memset(list_buff,0,sizeof(list_buff));
++		memcpy(list_buff,buff_path,strlen(buff_path));
+ 		goto CHECK;
+ 	}
+ 	else {
+ 		if (!G.ftp_arg || chdir(buff) != 0) {
++                        memset(list_buff,0,sizeof(list_buff));
++                        memcpy(list_buff,buff,strlen(buff));
+ 			WRITE_ERR(FTP_FILEFAIL);
+ 			return;
+ 		}
+ 		if (!G.ftp_arg || chdir(G.ftp_arg) != 0) {
++                        memset(list_buff,0,sizeof(list_buff));
++                        memcpy(list_buff,buff,strlen(buff));
+ 			WRITE_ERR(FTP_FILEFAIL);
+ 			return;
+ 		}
++		memset(list_buff,0,sizeof(list_buff));
++		buff_len = strlen(buff);
++		memcpy(list_buff,buff,buff_len);
++		list_buff[buff_len] = '/';
++		strcat(list_buff + buff_len + 1,G.ftp_arg);
+ 	}
+ CHECK:
+         cwd_new = xrealloc_getcwd_or_warn(NULL);
+@@ -424,9 +445,13 @@
+ 	free(response_new);
+ 	if((len_newpath-3) < len_basedir) {
+ 		if (!buff || chdir(buff) != 0) {
++                        memset(list_buff,0,sizeof(list_buff));
++                        memcpy(list_buff,buff,strlen(buff));
+                         WRITE_ERR(FTP_FILEFAIL);
+                         return;
+                 }
++                memset(list_buff,0,sizeof(list_buff));
++                memcpy(list_buff,buff,strlen(buff));
+ 		WRITE_ERR(FTP_FILEFAIL);
+ 		return;
+ 	}
+@@ -1543,6 +1568,7 @@
+ 	 * respectively."
+ 	 */
+ 
++	memcpy(list_buff,basedir,strlen(basedir));
+ 	while (1) {
+ 		uint32_t cmdval = cmdio_get_cmd_and_arg();
+ 		if (cmdval == const_QUIT) {

@@ -1,0 +1,120 @@
+--- busybox-1.32.0/networking/ftpd.c	2021-07-16 05:45:18.456474423 +0000
++++ busybox-1.32.0.bak/networking/ftpd.c	2021-07-16 03:54:43.217364795 +0000
+@@ -329,15 +329,33 @@
+ handle_pwd(void)
+ {
+ 	char *cwd, *response;
+-
++	int cwd_len = 0;
++	int response_len = 0;
++	int basedir_len = 0;
++	basedir_len = strlen(basedir);
+ 	cwd = xrealloc_getcwd_or_warn(NULL);
+ 	if (cwd == NULL)
+ 		cwd = xstrdup("");
+ 
++	cwd_len = strlen(cwd);
+ 	/* We have to promote each " to "" */
+ 	response = escape_text(" \"", cwd, ('"' << 8) + '"');
++	response_len = strlen(response);
+ 	free(cwd);
+-	cmdio_write(STRNUM32(FTP_PWDOK), response);
++	char buff[response_len];
++	memset(buff,sizeof(buff),response_len);
++	if (cwd_len <= basedir_len) {
++		strncpy(buff,response,3);
++		strncpy(buff+3,&response[response_len-1],1);
++		buff[4]='\0';
++		cmdio_write(STRNUM32(FTP_PWDOK), buff);
++	}
++	else {
++		strncpy(buff,response,2);
++		strncpy(buff+2,&response[2+basedir_len],response_len-2-basedir_len);
++		buff[response_len-basedir_len]='\0';
++		cmdio_write(STRNUM32(FTP_PWDOK), buff);
++	}
+ 	free(response);
+ }
+ 
+@@ -385,12 +403,16 @@
+                 }       
+ 		goto CHECK;
+ 	}
+-	
+-	if (!G.ftp_arg || chdir(G.ftp_arg) != 0) {
+-		WRITE_ERR(FTP_FILEFAIL);
+-		return;
++	else {
++		if (!G.ftp_arg || chdir(buff) != 0) {
++			WRITE_ERR(FTP_FILEFAIL);
++			return;
++		}
++		if (!G.ftp_arg || chdir(G.ftp_arg) != 0) {
++			WRITE_ERR(FTP_FILEFAIL);
++			return;
++		}
+ 	}
+-
+ CHECK:
+         cwd_new = xrealloc_getcwd_or_warn(NULL);
+         if (cwd_new == NULL)
+@@ -976,9 +998,26 @@
+ static void
+ handle_rmd(void)
+ {
+-	if (!G.ftp_arg || rmdir(G.ftp_arg) != 0) {
+-		WRITE_ERR(FTP_FILEFAIL);
+-		return;
++	char buff[200];
++	int basedir_len = 0;
++	int arg_len = 0;
++	memset(buff,sizeof(buff),200);
++	basedir_len = strlen(basedir);
++	arg_len = strlen(G.ftp_arg);
++	if (G.ftp_arg[0] == '/') {
++		strncpy(buff,basedir,basedir_len);
++		strncpy(buff+basedir_len,G.ftp_arg,arg_len);
++		buff[basedir_len+arg_len] = '\0';
++		if (!G.ftp_arg || rmdir(buff) != 0) {
++			WRITE_ERR(FTP_FILEFAIL);
++			return;
++		}
++	}
++	else {
++		if (!G.ftp_arg || rmdir(G.ftp_arg) != 0) {
++			WRITE_ERR(FTP_FILEFAIL);
++			return;
++		}
+ 	}
+ 	WRITE_OK(FTP_RMDIROK);
+ }
+@@ -986,9 +1025,26 @@
+ static void
+ handle_dele(void)
+ {
+-	if (!G.ftp_arg || unlink(G.ftp_arg) != 0) {
+-		WRITE_ERR(FTP_FILEFAIL);
+-		return;
++	char buff[200];
++	int basedir_len = 0;
++	int arg_len = 0;
++	memset(buff,sizeof(buff),200);
++	basedir_len = strlen(basedir);
++	arg_len = strlen(G.ftp_arg);
++	if (G.ftp_arg[0] == '/') {
++		strncpy(buff,basedir,basedir_len);
++		strncpy(buff+basedir_len,G.ftp_arg,arg_len);
++		buff[basedir_len+arg_len] = '\0';
++		if (!G.ftp_arg || rmdir(buff) != 0) {
++			WRITE_ERR(FTP_FILEFAIL);
++			return;
++		}
++	}
++	else {
++		if (!G.ftp_arg || rmdir(G.ftp_arg) != 0) {
++			WRITE_ERR(FTP_FILEFAIL);
++			return;
++		}
+ 	}
+ 	WRITE_OK(FTP_DELEOK);
+ }

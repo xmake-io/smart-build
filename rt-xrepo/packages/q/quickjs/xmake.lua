@@ -6,6 +6,7 @@ package("quickjs")
 
     add_versions("2020-11-08", "2e9d63dab390a95ed365238f21d8e9069187f7ed195782027f0ab311bb64187b")
 
+    add_patches("2020-11-08", path.join(os.scriptdir(), "patches", "2020-11-08", "1-quickjs-makefile.patch"), "72b5904c052c664e949e99475a94e1404c81a8363c970e40a03a05ef98c5aace")
     add_patches("2020-11-08", path.join(os.scriptdir(), "patches", "2020-11-08", "2-os-platform.patch"), "70c873df0210cfc3254c88ab95afa8bcc1d207d244fcf1d20fb25eb199b14d30")
 
     if not is_plat("windows", "mingw") then
@@ -16,7 +17,7 @@ package("quickjs")
         package:addenv("PATH", "bin")
     end)
 
-    on_install("linux", function (package)
+    on_install("linux", "cross", function (package)
         io.writefile("xmake.lua", ([[
             add_rules("mode.release")
             target("host-qjs")
@@ -37,7 +38,7 @@ package("quickjs")
         import("package.tools.xmake").install(package)
     end)
 
-    on_install("linux", function (package)
+    on_install("linux", "cross", function (package)
         io.writefile("xmake.lua", ([[
             add_rules("mode.debug", "mode.release")
             target("host-qjs")

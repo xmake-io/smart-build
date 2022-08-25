@@ -1,0 +1,13 @@
+--- busybox-1.32.0/archival/bbunzip.c	2020-06-27 02:47:44.000000000 +0800
++++ busybox-1.32.0-bak/archival/bbunzip.c	2021-09-29 17:44:16.257845615 +0800
+@@ -133,7 +133,10 @@
+ 		}
+ 
+ 		if (!(option_mask32 & BBUNPK_OPT_STDOUT))
++                {
+ 			xclose(STDOUT_FILENO); /* with error check! */
++			xclose(STDIN_FILENO);
++                }
+ 
+ 		if (filename) {
+ 			char *del = new_name;

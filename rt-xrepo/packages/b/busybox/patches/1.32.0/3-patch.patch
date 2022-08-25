@@ -1,0 +1,10 @@
+--- busybox-1.32.0/editors/patch.c.orig	2021-05-10 18:58:01.561841916 +0800
++++ busybox-1.32.0/editors/patch.c	2021-05-11 17:20:04.914631989 +0800
+@@ -163,6 +163,7 @@
+ 		if (!ENABLE_LONG_OPTS || TT.tempname[0]) { /* not --dry-run? */
+ 			temp = xstrdup(TT.tempname);
+ 			temp[strlen(temp) - 6] = '\0';
++			xunlink(temp);
+ 			rename(TT.tempname, temp);
+ 			free(temp);
+ 			free(TT.tempname);

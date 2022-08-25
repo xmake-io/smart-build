@@ -7,22 +7,19 @@ package("openssl")
 
     add_versions("1.1.1i", "e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242")
 
+    add_patches("1.1.1i", path.join(os.scriptdir(), "patches", "1.1.1i", "1-openssl.patch"), "3df10a4c3826dfe77da22ef33dfb950c8a7df5e6d2bef8abc95ac10c89bf5ef8")
+
     add_links("ssl", "crypto")
 
     on_install("cross", "linux", function (package)
+
         local target = "linux-generic32"
-        if package:is_targetos("linux") then
-            if package:is_arch("arm64") then
-                target = "linux-aarch64"
-        --    else
-        --        target = "linux-armv4"
-            end
-        end
-        local configs = {target, "-DOPENSSL_NO_HEARTBEATS", "no-shared", "no-threads", "--prefix=" .. package:installdir()}
         local buildenvs = import("package.tools.autoconf").buildenvs(package)
-        os.vrun("./config %s --prefix=\"%s\"", package:debug() and "--debug" or "", package:installdir())
+        buildenvs.CFLAGS = path.join(buildenvs.CFLAGS, " -I", path.join(os.scriptdir(), "include"))
+        print(buildenvs.CFLAGS)
+        os.vrun("./Configure " ..  target .. " -DOPENSSL_NO_HEARTBEATS no-threads -no-shared" .. " --prefix=" .. package:installdir())
         import("package.tools.make").install(package, buildenvs)
-	os.cp(os.scriptdir("") .. "/include/*", package:installdir("include"))
+	    os.cp(os.scriptdir("") .. "/include/*", package:installdir("include"))
     end)
 
     on_test(function (package)

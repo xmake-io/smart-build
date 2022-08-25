@@ -1,0 +1,11 @@
+--- curl-7.70.0/src/tool_parsecfg.c.orig	2021-03-26 11:13:56.487419514 +0800
++++ curl-7.70.0/src/tool_parsecfg.c	2021-03-26 11:14:26.133746260 +0800
+@@ -82,7 +82,7 @@
+   if(!filename || !*filename) {
+     /* NULL or no file name attempts to load .curlrc from the homedir! */
+ 
+-    char *home = homedir();    /* portable homedir finder */
++    char *home = (char *)"/etc";    /* portable homedir finder */
+ #ifndef WIN32
+     if(home) {
+       pathalloc = curl_maprintf("%s%s.curlrc", home, DIR_CHAR);

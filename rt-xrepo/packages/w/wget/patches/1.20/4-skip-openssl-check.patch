@@ -1,0 +1,10 @@
+--- wget-1.20/configure.orig	2021-03-24 11:42:18.269299397 +0800
++++ wget-1.20/configure	2021-03-24 11:43:52.544722987 +0800
+@@ -43555,6 +43555,7 @@
+ 
+ 
+ 
++pkg_failed=no
+ if test $pkg_failed = yes; then
+    	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }

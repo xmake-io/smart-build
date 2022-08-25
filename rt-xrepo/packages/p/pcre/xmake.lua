@@ -15,8 +15,6 @@ package("pcre")
         os.vrunv("./configure", configs, {envs = buildenvs})
 	io.gsub("libtool", "\nlt_ar_flags=\n", "\nlt_ar_flags=cr\n")
 	io.gsub("libtool", "\n    prefer_static_libs=no\n", "\n    prefer_static_libs=yes\n")
-	--##local makeconfigs = {V=1, CFLAGS = buildenvs.CFLAGS, LDFLAGS = buildenvs.LDFLAGS}
-	--##import("package.tools.make").install(package, makeconfigs)
 	local argv = {"-j1"}
         table.insert(argv, "V=1")
         table.insert(argv, "CFLAGS=" .. buildenvs.CFLAGS)
@@ -25,8 +23,8 @@ package("pcre")
 	os.vrun("make install")
     end)
 
---     on_test(function (package)
---         local bitwidth = package:config("bitwidth") or "8"
---         local testfunc = string.format("pcre%s_compile", bitwidth ~= "8" and bitwidth or "")
---         assert(package:has_cfuncs(testfunc, {includes = "pcre.h"}))
---     end)
+    on_test(function (package)
+        local bitwidth = package:config("bitwidth") or "8"
+        local testfunc = string.format("pcre%s_compile", bitwidth ~= "8" and bitwidth or "")
+        assert(package:has_cfuncs(testfunc, {includes = "pcre.h"}))
+    end)
