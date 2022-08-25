@@ -1,0 +1,16 @@
+--- busybox-1.32.0/libbb/copyfd.c.orig	2021-05-18 19:47:39.452363619 +0800
++++ busybox-1.32.0/libbb/copyfd.c	2021-05-19 12:00:06.732881540 +0800
+@@ -87,6 +87,13 @@
+ 			}
+ 		}
+ #endif
++		char tmpstr[10];
++		if(buffer[0] != NULL && !strcmp(applet_name, "zcat")){
++			memset(buffer, '\0', sizeof(buffer));
++			//need to run printf or sprintf, or buffer will not be setted success.
++			sprintf(tmpstr, "%c", buffer[0]);
++			break;
++		}
+ 		rd = safe_read(src_fd, buffer,
+ 			size > buffer_size ? buffer_size : size);
+ 		if (rd < 0) {

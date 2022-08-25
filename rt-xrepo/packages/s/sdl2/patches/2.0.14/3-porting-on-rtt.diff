@@ -1,0 +1,647 @@
+diff --git a/configure.ac b/configure.ac
+index b7e519b..d07ae83 100755
+--- a/configure.ac
++++ b/configure.ac
+@@ -2281,6 +2281,18 @@ AS_HELP_STRING([--enable-kmsdrm-shared], [dynamically load kmsdrm support [[defa
+     fi
+ }
+ 
++CheckRttVideo()
++{
++    AC_ARG_ENABLE(video-rtt,
++AS_HELP_STRING([--enable-video-rtt], [use rt-smart video driver [[default=yes]]]),
++                  , enable_video_rtt=yes)
++    if test x$enable_video_rtt = xyes; then
++        AC_DEFINE(SDL_VIDEO_DRIVER_RTT, 1, [ ])
++        SOURCES="$SOURCES $srcdir/src/video/rtt/*.c"
++        have_video=yes
++    fi
++}
++
+ dnl rcg04172001 Set up the Null video driver.
+ CheckDummyVideo()
+ {
+@@ -3536,6 +3548,7 @@ case "$host" in
+         CheckVisibilityHidden
+         CheckDeclarationAfterStatement
+         CheckDummyVideo
++        CheckRttVideo
+         CheckDiskAudio
+         CheckDummyAudio
+         CheckDLOPEN
+diff --git a/include/SDL_config.h.in b/include/SDL_config.h.in
+index 3a2a714..66da63e 100755
+--- a/include/SDL_config.h.in
++++ b/include/SDL_config.h.in
+@@ -344,6 +344,7 @@
+ #undef SDL_VIDEO_DRIVER_DIRECTFB
+ #undef SDL_VIDEO_DRIVER_DIRECTFB_DYNAMIC
+ #undef SDL_VIDEO_DRIVER_DUMMY
++#undef SDL_VIDEO_DRIVER_RTT
+ #undef SDL_VIDEO_DRIVER_WINDOWS
+ #undef SDL_VIDEO_DRIVER_WAYLAND
+ #undef SDL_VIDEO_DRIVER_WAYLAND_QT_TOUCH
+diff --git a/src/core/linux/SDL_evdev_capabilities.h b/src/core/linux/SDL_evdev_capabilities.h
+index e9c66c0..a0021cc 100755
+--- a/src/core/linux/SDL_evdev_capabilities.h
++++ b/src/core/linux/SDL_evdev_capabilities.h
+@@ -25,7 +25,7 @@
+ #ifndef SDL_evdev_capabilities_h_
+ #define SDL_evdev_capabilities_h_
+ 
+-#if HAVE_LIBUDEV_H || defined(SDL_JOYSTICK_LINUX)
++#if HAVE_LIBUDEV_H || defined(SDL_JOYSTICK_LINUX) || defined(SDL_HAPTIC_LINUX)
+ 
+ #include <linux/input.h>
+ 
+diff --git a/src/video/SDL_sysvideo.h b/src/video/SDL_sysvideo.h
+index c8c425b..38d3979 100755
+--- a/src/video/SDL_sysvideo.h
++++ b/src/video/SDL_sysvideo.h
+@@ -439,6 +439,7 @@ extern VideoBootStrap QNX_bootstrap;
+ extern VideoBootStrap OFFSCREEN_bootstrap;
+ extern VideoBootStrap OS2DIVE_bootstrap;
+ extern VideoBootStrap OS2VMAN_bootstrap;
++extern VideoBootStrap RTT_bootstrap;
+ 
+ extern SDL_VideoDevice *SDL_GetVideoDevice(void);
+ extern int SDL_AddBasicVideoDisplay(const SDL_DisplayMode * desktop_mode);
+diff --git a/src/video/SDL_video.c b/src/video/SDL_video.c
+index a0ca322..b999023 100755
+--- a/src/video/SDL_video.c
++++ b/src/video/SDL_video.c
+@@ -119,6 +119,9 @@ static VideoBootStrap *bootstrap[] = {
+ #endif
+ #if SDL_VIDEO_DRIVER_DUMMY
+     &DUMMY_bootstrap,
++#endif
++#if SDL_VIDEO_DRIVER_RTT
++    &RTT_bootstrap,
+ #endif
+     NULL
+ };
+@@ -462,6 +465,7 @@ SDL_GetVideoDriver(int index)
+     return NULL;
+ }
+ 
++
+ /*
+  * Initialize the video and event subsystems -- determine native pixel format
+  */
+diff --git a/src/video/rtt/SDL_rttframebuffer.c b/src/video/rtt/SDL_rttframebuffer.c
+new file mode 100755
+index 0000000..55c2c8c
+--- /dev/null
++++ b/src/video/rtt/SDL_rttframebuffer.c
+@@ -0,0 +1,84 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2021-1-14     eason      The first version
++ */
++
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_RTT
++
++
++#include "../SDL_sysvideo.h"
++#include "SDL_rttframebuffer.h"
++#include "SDL_rttvideo.h"
++
++#define RTT_SURFACE   "_SDL_RttSurface"
++
++int SDL_RTT_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch)
++{
++    SDL_Surface *surface;
++    const Uint32 surface_format = LCD_COLOR_SPACE;
++    int w, h;
++    int bpp;
++    Uint32 Rmask, Gmask, Bmask, Amask;
++
++    /* Free the old framebuffer surface */
++    surface = (SDL_Surface *) SDL_GetWindowData(window, RTT_SURFACE);
++    SDL_FreeSurface(surface);
++
++    /* Create a new one */
++    SDL_PixelFormatEnumToMasks(surface_format, &bpp, &Rmask, &Gmask, &Bmask, &Amask);
++    SDL_GetWindowSize(window, &w, &h);
++    surface = SDL_CreateRGBSurface(0, w, h, bpp, Rmask, Gmask, Bmask, Amask);
++    if (!surface) {
++        return -1;
++    }
++
++    /* Save the info and return! */
++    SDL_SetWindowData(window, RTT_SURFACE, surface);
++    *format = surface_format;
++    *pixels = surface->pixels;
++    *pitch = surface->pitch;
++    return 0;
++}
++
++
++int SDL_RTT_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects)
++{
++    static int frame_number;
++    SDL_Surface *surface;
++
++    surface = (SDL_Surface *) SDL_GetWindowData(window, RTT_SURFACE);
++    if (!surface) {
++        return SDL_SetError("Couldn't find rtt surface for window");
++    }
++
++    /* Send the data to the display */
++    if (SDL_getenv("SDL_VIDEO_RTT_SAVE_FRAMES")) {
++        char file[128];
++        SDL_snprintf(file, sizeof(file), "SDL_window%d-%8.8d.bmp",
++                     SDL_GetWindowID(window), ++frame_number);
++        SDL_SaveBMP(surface, file);
++    }
++
++    RTT_surface2lcd(surface);
++
++    return 0;
++}
++
++void SDL_RTT_DestroyWindowFramebuffer(_THIS, SDL_Window * window)
++{
++    SDL_Surface *surface;
++
++    surface = (SDL_Surface *) SDL_SetWindowData(window, RTT_SURFACE, NULL);
++    SDL_FreeSurface(surface);
++}
++
++#endif /* SDL_VIDEO_DRIVER_RTT */
++
++/* vi: set ts=4 sw=4 expandtab: */
+diff --git a/src/video/rtt/SDL_rttframebuffer.h b/src/video/rtt/SDL_rttframebuffer.h
+new file mode 100755
+index 0000000..bdaa4de
+--- /dev/null
++++ b/src/video/rtt/SDL_rttframebuffer.h
+@@ -0,0 +1,18 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2021-1-14     eason      The first version
++ */
++
++#ifndef SDL_RTTFRAMEBUFFER_H_
++#define SDL_RTTFRAMEBUFFER_H_
++
++int SDL_RTT_CreateWindowFramebuffer(_THIS, SDL_Window * window, Uint32 * format, void ** pixels, int *pitch);
++int SDL_RTT_UpdateWindowFramebuffer(_THIS, SDL_Window * window, const SDL_Rect * rects, int numrects);
++void SDL_RTT_DestroyWindowFramebuffer(_THIS, SDL_Window * window);
++
++#endif
+\ No newline at end of file
+diff --git a/src/video/rtt/SDL_rttlcd.c b/src/video/rtt/SDL_rttlcd.c
+new file mode 100755
+index 0000000..468206e
+--- /dev/null
++++ b/src/video/rtt/SDL_rttlcd.c
+@@ -0,0 +1,63 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2021-1-14     eason      The first version
++ */
++
++#include <rtthread.h>
++#include <lcd.h>
++#include "SDL_surface.h"
++#include "SDL_pixels.h"
++#include "SDL_rttlcd.h"
++
++
++#define LCD_BUF_SIZE (LCD_WIDTH * LCD_HEIGHT)
++
++rt_uint16_t pixel_ptr[LCD_BUF_SIZE];
++rt_device_t lcd = NULL;
++struct fb_fix_screeninfo f_info;
++struct fb_var_screeninfo v_info;
++
++int RTT_surface2lcd(SDL_Surface *surface)
++{
++    int index = 0;
++    int i;
++    if (lcd)
++    {
++        memcpy((void *)f_info.smem_start, (rt_uint16_t *)(surface->pixels), LCD_BUF_SIZE*2);
++        rt_thread_mdelay(100);
++        rt_device_control(lcd, RTGRAPHIC_CTRL_RECT_UPDATE, NULL);
++    }
++
++    return 0;
++}
++
++int RTT_lcdInit()
++{
++   rt_err_t ret = -1;
++   lcd = rt_device_find("lcd");
++   if(!lcd) return 1;
++   ret = rt_device_open(lcd, RT_DEVICE_OFLAG_RDWR);
++   if(-1 ==ret) return 1;
++   rt_device_control(lcd, FBIOGET_FSCREENINFO, &f_info);
++   printf("screen: %s - 0x%08x, size %d\n", f_info.id, (unsigned int)f_info.smem_start, f_info.smem_len);
++   
++   rt_device_control(lcd, FBIOGET_VSCREENINFO, &v_info);
++   printf("screen: bpp %d, width - %d, height - %d\n", v_info.bits_per_pixel, v_info.xres, v_info.yres);
++   return ret;
++}
++
++int RTT_lcdQuit()
++{  
++    rt_err_t ret = -1;
++    if(lcd)
++    {
++       ret = rt_device_close(lcd);
++       lcd = NULL;
++    }
++    return ret;
++}
+\ No newline at end of file
+diff --git a/src/video/rtt/SDL_rttlcd.h b/src/video/rtt/SDL_rttlcd.h
+new file mode 100755
+index 0000000..f3206d5
+--- /dev/null
++++ b/src/video/rtt/SDL_rttlcd.h
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2021-1-14     eason      The first version
++ */
++
++#ifndef SDL_RTTLCD_H_
++#define SDL_RTTLCD_H_
++
++#define LCD_COLOR_SPACE SDL_PIXELFORMAT_RGB565
++#define LCD_WIDTH 640
++#define LCD_HEIGHT 480
++
++#define RTGRAPHIC_CTRL_RECT_UPDATE 0
++
++int RTT_surface2lcd(SDL_Surface *surface);
++int RTT_lcdInit();
++int RTT_lcdQuit();
++
++#endif
+\ No newline at end of file
+diff --git a/src/video/rtt/SDL_rttvideo.c b/src/video/rtt/SDL_rttvideo.c
+new file mode 100755
+index 0000000..c967d22
+--- /dev/null
++++ b/src/video/rtt/SDL_rttvideo.c
+@@ -0,0 +1,155 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2021-1-14     eason      The first version
++ */
++
++#include "../../SDL_internal.h"
++
++#if SDL_VIDEO_DRIVER_RTT
++
++
++/* 
++*  Poting SDL to rt-smart platform baseed on Dummy SDL video driver ;
++*/
++
++#include "SDL_video.h"
++#include "SDL_mouse.h"
++#include "../SDL_sysvideo.h"
++#include "../SDL_pixels_c.h"
++#include "../../events/SDL_events_c.h"
++#include "SDL_rttframebuffer.h"
++#include "SDL_rttvideo.h"
++
++#define RTT_DRIVER_NAME "rtt"
++
++static int RTT_VideoInit(_THIS);
++static int RTT_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode);
++static void RTT_VideoQuit(_THIS);
++
++static int
++RTT_Available(void)
++{
++    const char *envr = SDL_getenv("SDL_VIDEODRIVER");
++    printf("envr: %s",envr);
++    if ((envr) && (SDL_strcmp(envr, RTT_DRIVER_NAME) == 0)) {
++        return (1);
++    }
++
++    return (0);
++}
++
++static void
++RTT_DeleteDevice(SDL_VideoDevice * device)
++{
++    SDL_free(device);
++}
++
++SDL_Window * Rtt_Window = NULL;
++
++int RTT_CreateWindow(_THIS, SDL_Window * window)
++{
++    if(Rtt_Window){
++        SDL_SetError(" only supports one window");
++        goto error;
++    }
++
++    Rtt_Window = window;
++    window->x = 0;
++    window->y = 0;
++    window->w = WINDOW_WIDTH_MAX;
++    window->h = WINDOW_HEIGHT_MAX;
++
++    window->flags &= ~SDL_WINDOW_HIDDEN;
++    window->flags |= SDL_WINDOW_SHOWN;          /* only one window on Android */
++    
++    return 0;
++  error:
++    return 1;
++}
++
++void RTT_SetWindowTitle(_THIS, SDL_Window * window){
++    //todo    
++}
++
++static SDL_VideoDevice *
++RTT_CreateDevice(int devindex)
++{
++    SDL_VideoDevice *device;
++
++    if (!RTT_Available()) {
++        return (0);
++    }
++
++    /* Initialize all variables that we clean on shutdown */
++    device = (SDL_VideoDevice *) SDL_calloc(1, sizeof(SDL_VideoDevice));
++    if (!device) {
++        SDL_OutOfMemory();
++        return (0);
++    }
++    device->is_dummy = SDL_TRUE;
++
++    /* Set the function pointers */
++    device->VideoInit = RTT_VideoInit;
++    device->VideoQuit = RTT_VideoQuit;
++    device->SetDisplayMode = RTT_SetDisplayMode;
++    device->CreateWindowFramebuffer = SDL_RTT_CreateWindowFramebuffer;
++    device->UpdateWindowFramebuffer = SDL_RTT_UpdateWindowFramebuffer;
++    device->DestroyWindowFramebuffer = SDL_RTT_DestroyWindowFramebuffer;
++    device->CreateSDLWindow = RTT_CreateWindow;
++    device->SetWindowTitle = RTT_SetWindowTitle;
++
++    device->free = RTT_DeleteDevice;
++    return device;
++}
++
++VideoBootStrap RTT_bootstrap = {
++    RTT_DRIVER_NAME, "rt-smart video driver",
++    RTT_CreateDevice
++};
++
++
++int
++RTT_VideoInit(_THIS)
++{
++    SDL_DisplayMode mode;
++
++    /* Use a fake 32-bpp desktop mode */
++    mode.format = LCD_COLOR_SPACE;
++    mode.w = LCD_WIDTH;
++    mode.h = LCD_HEIGHT;
++    mode.refresh_rate = 0;
++    mode.driverdata = NULL;
++    if (SDL_AddBasicVideoDisplay(&mode) < 0) {
++        return -1;
++    }
++
++    SDL_zero(mode);
++    SDL_AddDisplayMode(&_this->displays[0], &mode);
++
++    if(RTT_lcdInit() != 0)
++    {
++        return -1;
++    }
++    /* We're done! */
++    return 0;
++}
++
++static int
++RTT_SetDisplayMode(_THIS, SDL_VideoDisplay * display, SDL_DisplayMode * mode)
++{
++    return 0;
++}
++
++void
++RTT_VideoQuit(_THIS)
++{
++    RTT_lcdQuit();
++}
++
++
++#endif /* SDL_VIDEO_DRIVER_RTT */
+\ No newline at end of file
+diff --git a/src/video/rtt/SDL_rttvideo.h b/src/video/rtt/SDL_rttvideo.h
+new file mode 100755
+index 0000000..975d410
+--- /dev/null
++++ b/src/video/rtt/SDL_rttvideo.h
+@@ -0,0 +1,22 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2021-1-14     eason      The first version
++ */
++
++#include "../../SDL_internal.h"
++
++#ifndef SDL_nullvideo_h_
++#define SDL_nullvideo_h_
++
++#include "../SDL_sysvideo.h"
++#include "SDL_rttlcd.h"
++
++#define WINDOW_WIDTH_MAX   LCD_WIDTH
++#define WINDOW_HEIGHT_MAX  LCD_HEIGHT 
++
++#endif /* SDL_nullvideo_h_ */
+\ No newline at end of file
+diff --git a/test/Makefile.in b/test/Makefile.in
+index 8c3bbf2..f3c65cb 100755
+--- a/test/Makefile.in
++++ b/test/Makefile.in
+@@ -68,6 +68,7 @@ TARGETS = \
+ 	testwm2$(EXE) \
+ 	testyuv$(EXE) \
+ 	torturethread$(EXE) \
++	testrtt$(EXE) \
+ 
+ 	
+ @OPENGL_TARGETS@ += testgl2$(EXE) testshader$(EXE)
+@@ -315,6 +316,8 @@ testvulkan$(EXE): $(srcdir)/testvulkan.c
+ testlocale$(EXE): $(srcdir)/testlocale.c
+ 	$(CC) -o $@ $? $(CFLAGS) $(LIBS)
+ 
++testrtt$(EXE): $(srcdir)/testrtt.c
++	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+ 
+ 
+ clean:
+diff --git a/test/testrtt.c b/test/testrtt.c
+new file mode 100755
+index 0000000..a1df434
+--- /dev/null
++++ b/test/testrtt.c
+@@ -0,0 +1,123 @@
++/*
++ * Copyright (c) 2006-2020, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: GPL-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2020-1-6     eason      The first version
++*/
++#include <SDL.h>
++#include <stdio.h>
++
++#define POINTS_COUNT 4
++
++const int SCREEN_WIDTH = 640;
++const int SCREEN_HEIGHT = 480;
++
++static SDL_Point points[POINTS_COUNT] = {
++    {320, 200},
++    {300, 240},
++    {340, 240},
++    {320, 200}
++};
++
++SDL_Rect rect = {0, 0, 320, 240};
++
++void usage(char * proc_name)
++{
++	printf("\nUsage: %s option\n", proc_name);
++	printf(	"\toption:\n"
++		"\t-l	draw line\n"
++		"\t-r	draw a rectangle\n"
++		"\t-t	draw a rectangle with texture\n");
++}
++
++
++int main( int argc, char* argv[] )
++{
++	//The window we'll be rendering to
++	SDL_Window* window = NULL;
++
++	//The surface contained by the window
++	SDL_Surface* screenSurface = NULL;
++	SDL_Renderer *renderer;
++	SDL_Texture *texture;
++
++	if( argc != 2 )
++	{
++		usage(argv[0]);
++		return(1);
++	}
++    //use dummy video driver
++    SDL_setenv("SDL_VIDEODRIVER","rtt",1);
++	//Initialize SDL
++	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
++	{
++		printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
++		return -1;
++	}
++
++
++	window = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
++	if( window == NULL )
++	{
++		printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
++		return -1;
++	}
++
++	renderer = SDL_CreateRenderer(window, -1, 0);
++
++	if(0 == strcmp("-l",argv[1]))
++	{
++		SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
++		SDL_RenderDrawLine(renderer, 0, 0,320, 200);
++
++		//SDL_RenderDrawLine(renderer, 320, 0, 320, 480);
++		SDL_RenderDrawLines(renderer, points, POINTS_COUNT);
++	}
++	else if(0 == strcmp("-r",argv[1]))
++	{
++		SDL_SetRenderDrawColor(renderer, 255, 0,0, 255);
++		SDL_Rect rect = {0, 0, 320, 240};
++		SDL_RenderDrawRect(renderer, &rect);
++		// SDL_RenderFillRect(renderer, &rect);
++	}
++	else if(0 == strcmp("-t",argv[1]))
++	{
++		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565,\
++									SDL_TEXTUREACCESS_TARGET, 640, 480);
++		rect.w = 320;//rand()%500;
++		rect.h = 240;//rand()%500;
++		SDL_SetRenderTarget(renderer,texture);
++		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
++		SDL_RenderClear(renderer);
++		SDL_RenderDrawRect(renderer, &rect);
++
++		SDL_SetRenderDrawColor(renderer,255,0,0,0);
++		SDL_RenderFillRect(renderer,&rect);
++
++		SDL_SetRenderTarget(renderer,NULL);
++		SDL_RenderCopy(renderer,texture,NULL,NULL);
++	}
++	else
++	{
++		usage(argv[0]);
++	}
++
++
++	SDL_RenderPresent(renderer);
++	SDL_Delay( 2000 );
++
++    //destory renderer
++    if (renderer) {
++        SDL_DestroyRenderer(renderer);
++    }
++ 	//Destroy window
++	SDL_DestroyWindow( window );
++
++	//Quit SDL subsystems
++	SDL_Quit();
++
++	return 0;
++}

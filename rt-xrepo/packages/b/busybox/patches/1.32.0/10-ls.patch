@@ -1,0 +1,33 @@
+--- busybox-1.32.0/coreutils/ls.c	2021-09-29 17:32:20.739408212 +0800
++++ busybox-1.32.0-bak/coreutils/ls.c	2021-09-29 17:31:56.731518667 +0800
+@@ -1065,6 +1065,9 @@
+ 	unsigned dnfiles;
+ 	unsigned dndirs;
+ 	unsigned i;
++	
++        struct stat stat_buf;
++        int value = 0;
+ #if ENABLE_FEATURE_LS_COLOR
+ 	/* colored LS support by JaWi, janwillem.janssen@lxtreme.nl */
+ 	/* coreutils 6.10:
+@@ -1193,9 +1196,17 @@
+ 	}
+ 
+ 	argv += optind;
+-	if (!argv[0])
+-		*--argv = list_buff;
+-
++        value = stat(list_buff,&stat_buf);
++        if( !value )
++        {
++	    if (!argv[0])
++	        *--argv = list_buff;
++        }
++        else
++        {
++            if (!argv[0])
++	        *--argv = (char *)".";
++        }
+ 	if (argv[1])
+ 		G.show_dirname = 1; /* 2 or more items? label directories */
+ 

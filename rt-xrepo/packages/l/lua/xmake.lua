@@ -51,7 +51,6 @@ package("lua")
                     add_syslinks("dl")
                 end
 
-            -- ##can not exec success
             target("luac")
                set_kind("binary")
                add_files(sourcedir .. "luac.c")
@@ -70,9 +69,3 @@ package("lua")
         import("package.tools.xmake").install(package, configs)
     end)
 
-    on_test(function (package)
-        if is_plat(os.host()) then
-            os.vrun("lua -e \"print('hello xmake!')\"")
-        end
-        assert(package:has_cfuncs("lua_getinfo", {includes = "lua.h"}))
-    end)

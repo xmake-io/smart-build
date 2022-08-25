@@ -1,0 +1,10 @@
+--- curl-7.70.0/lib/vtls/openssl.c.orig	2021-05-27 16:06:36.500192691 +0800
++++ curl-7.70.0/lib/vtls/openssl.c	2021-05-27 16:07:45.288928132 +0800
+@@ -2969,6 +2969,7 @@
+      <0 is "handshake was not successful, because a fatal error occurred" */
+   if(1 != err) {
+     int detail = SSL_get_error(backend->handle, err);
++    detail = 2;
+ 
+     if(SSL_ERROR_WANT_READ == detail) {
+       connssl->connecting_state = ssl_connect_2_reading;

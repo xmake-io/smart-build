@@ -1,0 +1,20 @@
+--- busybox-1.32.0/coreutils/ls.c	2019-06-10 17:09:31.000000000 +0800
++++ busybox-1.32.0-bak/coreutils/ls.c	2021-09-27 15:35:53.876234647 +0800
+@@ -185,7 +185,7 @@
+ # define IF_NOT_FEATURE_LS_TIMESTAMPS(...)
+ #endif
+ 
+-
++extern char list_buff[100];
+ enum {
+ TERMINAL_WIDTH  = 80,           /* use 79 if terminal has linefold bug */
+ 
+@@ -1194,7 +1194,7 @@
+ 
+ 	argv += optind;
+ 	if (!argv[0])
+-		*--argv = (char*)".";
++		*--argv = list_buff;
+ 
+ 	if (argv[1])
+ 		G.show_dirname = 1; /* 2 or more items? label directories */

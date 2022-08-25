@@ -1,0 +1,24 @@
+--- openssl-1.1.1i/crypto/mem_sec.c.orig	2020-12-08 21:20:59.000000000 +0800
++++ openssl-1.1.1i/crypto/mem_sec.c	2021-03-18 16:59:17.481617097 +0800
+@@ -30,7 +30,7 @@
+ # if defined(OPENSSL_SYS_LINUX)
+ #  include <sys/syscall.h>
+ #  if defined(SYS_mlock2)
+-#   include <linux/mman.h>
++#   include <sys/mman.h>
+ #   include <errno.h>
+ #  endif
+ # endif
+--- openssl-1.1.1i/engines/e_afalg.c.orig	2020-12-08 21:20:59.000000000 +0800
++++ openssl-1.1.1i/engines/e_afalg.c	2021-03-18 16:58:33.281013680 +0800
+@@ -22,8 +22,8 @@
+ 
+ #include <sys/socket.h>
+ #include <linux/version.h>
+-#define K_MAJ   4
+-#define K_MIN1  1
++#define K_MAJ   5
++#define K_MIN1  9
+ #define K_MIN2  0
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2) || \
+     !defined(AF_ALG)

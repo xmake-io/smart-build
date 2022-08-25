@@ -1,0 +1,38 @@
+--- wget-1.20/src/Makefile.orig	2021-03-25 17:15:03.175867425 +0800
++++ wget-1.20/src/Makefile	2021-03-25 17:15:15.968495208 +0800
+@@ -481,7 +481,7 @@
+ CYGPATH_W = echo
+ 
+ # The following line is losing on some versions of make!
+-DEFS = -DHAVE_CONFIG_H -DSYSTEM_WGETRC=\"$(sysconfdir)/wgetrc\" -DLOCALEDIR=\"$(localedir)\"
++DEFS = -DHAVE_CONFIG_H -DSYSTEM_WGETRC=\"/etc/wgetrc\" -DLOCALEDIR=\"$(localedir)\"
+ DEPDIR = .deps
+ ECHO_C = 
+ ECHO_N = -n
+--- wget-1.20/src/utils.c.orig	2021-03-25 17:12:05.795182766 +0800
++++ wget-1.20/src/utils.c	2021-03-25 17:11:29.073390275 +0800
+@@ -880,15 +880,15 @@
+     return NULL;
+   }
+ #if !(defined(WINDOWS) || defined(__VMS))
+-  if (fstats != NULL &&
+-      (fdstats.st_dev != fstats->st_dev ||
+-       fdstats.st_ino != fstats->st_ino))
+-  {
+-    /* File changed since file_exists_p() : NOT SAFE */
+-    logprintf (LOG_NOTQUIET, _("File %s changed since the last check. Security check failed."), fname);
+-    fclose (fp);
+-    return NULL;
+-  }
++//  if (fstats != NULL &&
++//      (fdstats.st_dev != fstats->st_dev ||
++//       fdstats.st_ino != fstats->st_ino))
++//  {
++//    /* File changed since file_exists_p() : NOT SAFE */
++//    logprintf (LOG_NOTQUIET, _("File %s changed since the last check. Security check failed."), fname);
++//    fclose (fp);
++//    return NULL;
++//  }
+ #endif
+ 
+   return fp;

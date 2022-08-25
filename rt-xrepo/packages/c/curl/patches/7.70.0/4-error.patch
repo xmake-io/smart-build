@@ -1,0 +1,10 @@
+--- curl-7.70.0/lib/connect.c.orig	2021-05-25 20:00:00.905993880 +0800
++++ curl-7.70.0/lib/connect.c	2021-05-25 20:00:26.014159362 +0800
+@@ -1260,6 +1260,7 @@
+   }
+ 
+   if(-1 == rc) {
++    error = EINPROGRESS;
+     switch(error) {
+     case EINPROGRESS:
+     case EWOULDBLOCK:
