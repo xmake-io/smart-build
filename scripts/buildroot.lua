@@ -33,21 +33,32 @@ function main()
     if option.get("menuconfig") then
         -- load configuration from menu
         local configs = load_menuconf()
-
+        for name, value in pairs(configs) do
+            config.set(name, value, {readonly = true})
+        end
         -- load platform instance
         local platform_inst = platform.load()
+
         -- clear local cache
         localcache.clear()
 
         -- check platform and toolchains
         platform_inst:check()
-        
-        if configs["package"] == "" then
-            print("please input package name!")
-            return
-        end
 
-        install_packages(configs["package"])
+        local lib_install_path = ""
+        if configs["arch"] == "arm" then
+            lib_install_path = "$(projectdir)" .. "/../sdk/lib/arm/cortex-a/"
+            for _, rcfile in ipairs(os.files(path.join(os.scriptdir(), "toolchains", "arm.lua"))) do
+                os.addenv("XMAKE_RCFILES", rcfile)
+            end
+        else
+            lib_install_path = "$(projectdir)" .. "/../sdk/lib/aarch64/cortex-a/"
+            for _, rcfile in ipairs(os.files(path.join(os.scriptdir(), "toolchains", "aarch64.lua"))) do
+                os.addenv("XMAKE_RCFILES", rcfile)
+            end
+        end
+        
+        install_packages()
 
         -- export packages to build directory
         local buildir = config.buildir()
@@ -59,16 +70,20 @@ function main()
                 os.mkdir(buildir .. "/include")
                 os.mkdir(buildir .. "/config")
             end
+
             if os.exists(package_inst:installdir("bin")) then
                 os.cp(package_inst:installdir("bin") .. "/*",  "$(projectdir)/../root/bin/")
             end
 
             if os.exists(package_inst:installdir("lib")) then
-                os.cp(package_inst:installdir("lib") .. "/*.a", "$(projectdir)/../sdk/lib/")
+                -- static library
+                os.cp(package_inst:installdir("lib") .. "/*.a", lib_install_path)
+                -- dynamic library
+                os.cp(package_inst:installdir("lib") .. "/*.so", "$(projectdir)/../root/lib/")
             end
 
             if os.exists(package_inst:installdir("include")) then
-                os.cp(package_inst:installdir("include") .. "/*", "$(projectdir)/../sdk/include/")
+                os.cp(package_inst:installdir("include") .. "/*.h", "$(projectdir)" .. "/../sdk/include/")
             end
         end
     end
