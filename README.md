@@ -137,7 +137,5 @@ smart-build 工具支持生成可执行文件。以 lua app 为例，演示配�
 
 [Xmake 官方网站](https://xmake.io/#/zh-cn/)
 
-[rt-smart 仓库地址]([rt-thread: RT-Thread是一个来自中国的开源物联网操作系统，它提供了非常强的可伸缩能力：从一个可以运行在ARM Cortex-M0芯片上的极小内核，到中等的ARM Cortex-M3/4/7系统，甚至是多核，64位的ARM Cortex-A，MIPS32/64处理器的功能丰富系统 - Gitee.com](https://gitee.com/rtthread/rt-thread/tree/rt-smart/))
-
-
+[rt-smart 仓库地址](https://gitee.com/rtthread/rt-thread/tree/rt-smart/)
 
