@@ -11,7 +11,7 @@ toolchain("aarch64-linux-musleabi")
         toolchain:add("ldflags",     "-march=armv8-a -D__RTTHREAD__  -Wall -n --static", {force = true})  
         toolchain:add("ldflags",     "-T $(projectdir)/../linker_scripts/aarch64/link.lds", {force = true})
         if not is_config("pkg_searchdirs", "dropbear") then
-            toolchain:add("ldflags",     "-L$(projectdir)/../sdk/rt-thread/lib/aarch64 -Wl,--whole-archive -lrtthread -Wl,--no-whole-archive", {force = true})
+            toolchain:add("ldflags",     "-L$(projectdir)/../sdk/rt-thread/lib/aarch64/cortex-a -Wl,--whole-archive -lrtthread -Wl,--no-whole-archive", {force = true})
         end
         toolchain:add("includedirs", "$(projectdir)/../sdk/rt-thread/include", {force = true})
         toolchain:add("includedirs", "$(projectdir)/../sdk/rt-thread/components/dfs", {force = true})

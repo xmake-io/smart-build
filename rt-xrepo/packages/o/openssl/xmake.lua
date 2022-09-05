@@ -16,7 +16,6 @@ package("openssl")
         local target = "linux-generic32"
         local buildenvs = import("package.tools.autoconf").buildenvs(package)
         buildenvs.CFLAGS = path.join(buildenvs.CFLAGS, " -I", path.join(os.scriptdir(), "include"))
-        print(buildenvs.CFLAGS)
         os.vrun("./Configure " ..  target .. " -DOPENSSL_NO_HEARTBEATS no-threads -no-shared" .. " --prefix=" .. package:installdir())
         import("package.tools.make").install(package, buildenvs)
 	    os.cp(os.scriptdir("") .. "/include/*", package:installdir("include"))

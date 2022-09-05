@@ -3,9 +3,9 @@ package("dropbear")
     set_homepage("https://matt.ucc.asn.au/dropbear/dropbear.html")
     set_description("Dropbear is a relatively small SSH server and client. It runs on a variety of unix platforms")
 
-    add_urls("https://matt.ucc.asn.au/dropbear/dropbear-$(version).tar.bz2")
+    add_urls("https://github.com/liukangcc/dropbear/archive/refs/tags/1.0.tar.gz")
 
-    add_versions("2022.82", "3a038d2bbc02bf28bbdd20c012091f741a3ec5cbe460691811d714876aad75d1")
+    add_versions("2022.82", "9593ea048f1f839e88b927488091cacff89b37b6a3f032e73d8d34b00d1caa82")
 
     add_deps("zlib")
 
@@ -27,12 +27,20 @@ package("dropbear")
             table.insert(configs, "--host=aarch64-linux-musleabi")
         end
 
-        table.insert(configs, "--enable-static")
+        -- table.insert(configs, "--enable-shared=" .. (package:config("shared") and "yes" or "no"))
+        -- table.insert(configs, "--enable-static=" .. (package:config("shared") and "no" or "yes"))
+
+        -- if package:config("pic") ~= false then
+        --     table.insert(configs, "--with-pic")
+        -- end
+
+        table.insert(configs, "--enable-debug")
         table.insert(configs, "--disable-utmp")
         table.insert(configs, "--disable-wtmp")
         table.insert(configs, "--disable-lastlog")
         table.insert(configs, "--disable-syslog")
-        package:config_set("pic", false)   
+
+        os.run("chmod 777 ./ifndef_wrapper.sh")
 	    import("package.tools.autoconf").install(package, configs, {packagedeps = "zlib"})
  
     end)

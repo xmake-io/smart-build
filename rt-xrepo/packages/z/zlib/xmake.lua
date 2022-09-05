@@ -1,7 +1,6 @@
 package("zlib")
     set_homepage("http://www.zlib.net")
     set_description("A Massively Spiffy Yet Delicately Unobtrusive Compression Library")
-
     add_urls("http://117.143.63.254:9012/www/rt-smart/packages/zlib-$(version).tar.gz")
     add_versions("1.2.8", "36658cb768a54c1d4dec43c3116c27ed893e88b02ecfcb44f2166f9c0b7f2a0d")
 
@@ -12,33 +11,16 @@ package("zlib")
         os.cp("*.h", package:installdir("include"))
     end)
 
-    on_install("mingw@msys", function (package)
-        io.gsub("win32/Makefile.gcc", "\nCC =.-\n",      "\nCC=" .. (package:build_getenv("cc") or "") .. "\n")
-        io.gsub("win32/Makefile.gcc", "\nAR =.-\n",      "\nAR=" .. (package:build_getenv("ar") or "") .. "\n")
-        import("package.tools.make").build(package, {"-f", "win32/Makefile.gcc", "libz.a"})
-        os.cp("libz.a", package:installdir("lib"))
-        os.cp("*.h", package:installdir("include"))
-    end)
+    on_install("cross", function (package)
+        local configs = {}
+        if package:config("shared") then
+            configs.kind = "shared"
+        end
 
-    on_install("macosx", "bsd", function (package)
-        import("package.tools.autoconf").install(package, {"--static"})
-    end)
-
-    on_install("linux", function (package)
-        import("package.tools.autoconf").configure(package, {"--static"})
-        io.gsub("Makefile", "\nCFLAGS=(.-)\n", "\nCFLAGS=%1 -fPIC\n")
-        os.vrun("make install -j4")
-    end)
-
-    on_install("iphoneos", "android@linux,macosx", "mingw@linux,macosx", "cross", function (package)
         import("package.tools.autoconf").configure(package, {host = ""})
-        io.gsub("Makefile", "\nCFLAGS=(.-)\n", "\nCFLAGS=%1 -fPIC\n")
-        io.gsub("Makefile", "\nAR=.-\n",      "\nAR=" .. (package:build_getenv("ar") or "") .. "\n")
-        io.gsub("Makefile", "\nARFLAGS=.-\n", "\nARFLAGS=cr\n")
-        io.gsub("Makefile", "\nRANLIB=.-\n",  "\nRANLIB=\n")
-        os.vrun("make install -j4")
-    end)
+        local buildenvs = import("package.tools.autoconf").buildenvs(package)
+        buildenvs.CFLAGS = path.join(buildenvs.CFLAGS, " --static")
+        buildenvs.LDFLAGS = path.join(buildenvs.LDFLAGS, " --static")
+        import("package.tools.make").install(package, buildenvs)
 
-    on_test(function (package)
-        assert(package:has_cfuncs("inflate", {includes = "zlib.h"}))
     end)

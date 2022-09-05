@@ -1,10 +1,10 @@
 package("busybox")
-
     set_homepage("https://busybox.net/")
     set_description("A powerful, efficient, lightweight, embeddable scripting language.")
 
     add_urls("http://117.143.63.254:9012/www/rt-smart/packages/busybox-$(version).tar.bz2")
 
+    add_patches("1.32.0", path.join(os.scriptdir(), "patches", "1.32.0", "1-ash.patch"), "6c0927d2217dba7c8bba03bef7a99bef2a448d9a5c6547c435f38f42f7b74844")
     add_patches("1.32.0", path.join(os.scriptdir(), "patches", "1.32.0", "2-uname.patch"), "e585c27ede49ae9ebb329a1f9a45a4378b0db1ec91b02cb0a20a614431486d58")
     add_patches("1.32.0", path.join(os.scriptdir(), "patches", "1.32.0", "3-patch.patch"), "2da45f5598a634660da1a58dbd8067a9c45346de6ee0fc3609200919af67038a")
     add_patches("1.32.0", path.join(os.scriptdir(), "patches", "1.32.0", "5-ftpd.patch"), "3bce40f040df5c4a49e88da3ea5466e1bc9cd866818ec7fc131573547636466d")
@@ -42,6 +42,6 @@ package("busybox")
         os.cp("busybox", "$(projectdir)/../root/bin/busybox.elf")
     end)
 
-    -- on_test(function (package)
-	--     assert(os.isfile(path.join(package:installdir("bin"), "busybox")))
-    -- end)
+    on_test(function (package)
+        assert(os.isfile("$(projectdir)/../root/bin/busybox.elf"))
+    end)
