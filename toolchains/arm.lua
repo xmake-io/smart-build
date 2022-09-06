@@ -1,7 +1,7 @@
 toolchain("arm-linux-musleabi")
     set_kind("standalone")
     set_description("Compile for the given platform")
-    set_sdkdir("/home/liukang/repo/rtthread-smart/tools/gnu_gcc/arm-linux-musleabi_for_x86_64-pc-linux-gnu")
+    set_sdkdir("$(projectdir)/../../tools/gnu_gcc/arm-linux-musleabi_for_x86_64-pc-linux-gnu")
 
     on_load(function(toolchain)
         os.setenv("PROJ_DIR", os.projectdir())
