@@ -37,6 +37,7 @@ task("buildroot")
                 options = {
                     {nil, "menuconfig", "k", nil, "config and build project."},
                     {nil, "clean",      "k", nil, "clean build dir."},
+                    {nil, "build",      "k", nil, "build and all installed pkg."},
                     {nil, "distclean",  "k", nil, "clean build and all installed pkg."}
 		        }
              }
